@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+
+    <title>BingoSoft</title>
+  </head>
+  
+  <body>
+    <h1>BingoSoft Pan Upload SDK Demo</h1>
+    <script src="https://unpkg.com/promise-polyfill@8.2.3/dist/polyfill.min.js"></script>
+    <script src="https://unpkg.com/fetch-polyfill@0.8.2/fetch.js"></script>
+    <script src="ftpsdk.umd.js"></script>
+    <script>
+      var uploader;
+      var cloudFileId;
+      var fetchToken = function() {
+          var clientSecretInputDom = document.getElementById("clientSecretInputId");
+          var clientSecret = clientSecretInputDom.value;
+          // const param = new URLSearchParams();
+          // param.append("grant_type", "password");
+          // param.append("username", "wangxinJerry");
+          // param.append("password", "Wx@Worklyai");
+          
+          fetch("https://www.bingolink.biz/sso/oauth2/token",
+              {
+              method: "POST",
+              mode: "cors",
+              headers: {
+                  'content-type': 'application/x-www-form-urlencoded',
+                  "Authorization": "Basic " + window.btoa("link_client:bGlua19jbGllbnRfc2VjcmV0")
+              },
+              body: "grant_type=client_credentials",
+              }).then(function(resp) {
+                  return resp.json();
+              }).then(function(data) {
+                  console.log(data)
+                  document.getElementById("tokenShow").innerHTML = data.access_token;
+                  }
+              )
+      }
+      function uploadClicked() {
+        var uploadboard = document.getElementById("showForUpload");
+        uploader = FtpSDK.Upload({
+            params: {
+                docUri: "https://pan.bingolink.biz/pan",
+                token: "YmluZ286YmluZ29fbWVtYmVyOklVQl9haG1YdFM",
+                token_type: "Bearer",
+                dirId: "145b0d14-a4a2-49d4-a9f7-e9ad491c190a",
+                forceNative: true
+            },
+            onBegin: function() {
+                console.log("Upload start")
+            },
+            onProgress: function(Status) {
+                var showText = "";
+                if(Status.progress && Status.progress > 0) {
+                    showText = uploader.file.name + ' 上传进度 ' + Status.progress;
+                }
+                uploadboard.innerText = showText;
+            },
+            onSuccess: function(fileInfo) {
+                console.log("fileInfo ", fileInfo);
+                cloudFileId = fileInfo.fileId;
+                uploadboard.innerText = "上传完成";
+            },
+            onError: function(error) {
+                console.log("error ", error);
+                uploadboard.innerText = "上传异常 " + error;
+            }});
+      }
+      function pause() {
+          if(uploader) uploader.Pause();
+      }
+      function resume() {
+          if(uploader) uploader.Resume();
+      }
+      function deleteFile() {
+          if(uploader) uploader.Delete();
+      }
+      function downloadFile() {
+          if(uploader) uploader.Download();
+      }
+    </script>
+      <p>
+        <label>输入clientSecret：</label><input id="clientSecretInputId"></input><span>    </span><button style="width:100px;height:23px" onclick="fetchToken()">认证</button>
+        <p id="tokenShow"></p>
+      </p>
+      <div>
+        操作
+        <p>
+          <button onclick="uploadClicked()" style="width:72px;height:23px">上传</button>
+        </p>
+        <p>
+          <button onclick="pause()" style="width:72px;height:23px">暂停</button>
+        </p>
+        <p>
+          <button onclick="resume()" style="width:72px;height:23px">恢复</button>
+        </p>
+        <p>
+          <button onclick="downloadFile()" style="width:72px;height:23px">下载</button>
+        </p>
+        <p>
+          <button onclick="deleteFile()" style="width:72px;height:23px">网盘删除</button>
+        </p>
+        <p>
+          <span id="showForUpload"></span>
+        </p>
+      </div>
+  </body>
+</html>
