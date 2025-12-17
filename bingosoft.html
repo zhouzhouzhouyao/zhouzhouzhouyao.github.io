@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+
+    <title>BingoSoft</title>
+  </head>
+  
+  <body>
+    <h1>BingoSoft Pan Upload SDK Demo</h1>
+    <script src="https://unpkg.com/promise-polyfill@8.2.3/dist/polyfill.min.js"></script>
+    <script src="https://unpkg.com/fetch-polyfill@0.8.2/fetch.js"></script>
+    <script src="ftpsdk.umd.js"></script>
+    <script>
+      var uploader;
+      var cloudFileId;
+      var token;
+      var fetchToken = function() {
+          var clientSecretInputDom = document.getElementById("clientSecretInputId");
+          var clientSecret = clientSecretInputDom.value;
+          // const param = new URLSearchParams();
+          // param.append("grant_type", "password");
+          // param.append("username", "zhoujingyao");
+          // param.append("password", "13693908265.");
+          
+          fetch("https://beta.bingolink.biz/sso/oauth2/token",
+              {
+              method: "POST",
+              mode: "cors",
+              headers: {
+                  'content-type': 'application/x-www-form-urlencoded',
+                  "Authorization": "Basic " + window.btoa("link_client:bGlua19jbGllbnRfc2VjcmV0")
+              },
+              body: "param",
+              }).then(function(resp) {
+                  return resp.json();
+              }).then(function(data) {
+                    console.log(data)
+                    document.getElementById("tokenShow").innerHTML = data.access_token;
+                    token = data.access_token;
+                  }
+              )
+      }
+      function uploadClicked() {
+        var uploadboard = document.getElementById("showForUpload");
+        uploader = FtpSDK.Upload({
+            params: {
+                docUri: "https://panbeta.bingolink.biz/pan/open",
+                token: "eyJ0eXAiOiJKV1QiLCJraWQiOiJsb2NhbCIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJiOTcxYjMzZC01YWVlLTQ4ODctOWYxOS0wYTVmNWNjN2NmYTciLCJ1c2VybmFtZSI6Inpob3VqaW5neWFvIiwidXNlcl9uYW1lIjoiemhvdWppbmd5YW8iLCJlQ29kZSI6ImxvY2FsIiwic2NvcGUiOm51bGwsInVzZXJfaWQiOiJiOTcxYjMzZC01YWVlLTQ4ODctOWYxOS0wYTVmNWNjN2NmYTciLCJ0ZW5hbnRfaWQiOiJvbWFiQXYiLCJvcmdfaWQiOiI4MTkxYmVlMC0wZTVlLTRiYTktYWY2Ni02MjY5NjE3ZmZhNTciLCJjbGllbnQiOnsiaWQiOiJjbGllbnRJZCIsImVDb2RlIjpudWxsfSwiaXNzIjoiaHR0cHM6Ly9iZXRhLmJpbmdvbGluay5iaXovc3NvIiwiZXhwIjoxNjYzMTY4MjQ1LCJzZm4iOiJTbGwrQ2dPTzFVRThoVGIxaUxud2l3PT0ifQ.DTAJ5t0aDfEKwNhWgbWweRsLHSbzE5wToavvTyJBe4FTwYs-5Z0f9xoAggTtX5td5DtS_JaGXppKDym9SjfIv_AKM8doKggPdkrpp6_8gmyXR7qXBnjwGQp3CowFhWY7WHFLbgHehZTKo90_w3VvMfwbYan7jnEbxoj7Os4Hs1Q",
+                token_type: "Bearer",
+                dirId: "1abd58a1-9445-4e90-8707-ef07b5c82fbf",
+                forceNative: true
+            },
+            onBegin: function() {
+                console.log("Upload start")
+            },
+            onProgress: function(Status) {
+                var showText = "";
+                if(Status.progress && Status.progress > 0) {
+                    showText = uploader.file.name + ' 上传进度 ' + Status.progress;
+                }
+                uploadboard.innerText = showText;
+            },
+            onSuccess: function(fileInfo) {
+                console.log("fileInfo ", fileInfo);
+                cloudFileId = fileInfo.fileId;
+                uploadboard.innerText = "上传完成";
+            },
+            onError: function(error) {
+                console.log("error ", error);
+                uploadboard.innerText = "上传异常 " + error;
+            }});
+      }
+      function pause() {
+          if(uploader) uploader.Pause();
+      }
+      function resume() {
+          if(uploader) uploader.Resume();
+      }
+      function deleteFile() {
+          if(uploader) uploader.Delete();
+      }
+      function downloadFile() {
+          if(uploader) uploader.Download();
+      }
+    </script>
+      <p>
+        <label>输入clientSecret：</label><input id="clientSecretInputId"></input><span>    </span><button style="width:100px;height:23px" onclick="fetchToken()">认证</button>
+        <p id="tokenShow"></p>
+      </p>
+      <div>
+        操作
+        <p>
+          <button onclick="uploadClicked()" style="width:72px;height:23px">上传</button>
+        </p>
+        <p>
+          <button onclick="pause()" style="width:72px;height:23px">暂停</button>
+        </p>
+        <p>
+          <button onclick="resume()" style="width:72px;height:23px">恢复</button>
+        </p>
+        <p>
+          <button onclick="downloadFile()" style="width:72px;height:23px">下载</button>
+        </p>
+        <p>
+          <button onclick="deleteFile()" style="width:72px;height:23px">网盘删除</button>
+        </p>
+        <p>
+          <span id="showForUpload"></span>
+        </p>
+      </div>
+  </body>
+</html>
